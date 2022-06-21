@@ -81,8 +81,33 @@
 
 [Link to Glue Dashboard](https://console.aws.amazon.com/gluestudio/home?region=us-east-1#/)
 
+
+
+**Source**
+
 - dataset: `s3://alex-m-dremio/dremio_datasets/Worker_Coops.csv`
-- 
+- uncheck recursive
+- make sure all fields are strings
+
+**ApplyMapping**
+
+- Change the two Number of Worker-Owner fields to the Int data type
+- Change Latitude and Longitude to the float data type
+
+**SQL_Create_Table**
+
+- `CREATE TABLE my_catalog.db.nyc_worker_coops AS (SELECT * FROM myDataSource);`
+
+**SQL_empty_set**
+
+- `select * FROM my_catalog.db.nyc_worker_coops LIMIT 0;`
+
+**IcebergConnector**
+
+1. Select the “Iceberg Connector” box in the visual editor pane on the left. 
+2. In the “Data target properties” tab, choose the Iceberg connection configured earlier for the “Connection” property.
+3. Under “Connection options,” click “Add new option” and set the “Key” as `path` and the “Value” as `my_catalog.db.nyc_worker_coops` (again, replace “db” with the name you chose for your Glue database). This path variable specifies the Iceberg table that the connector will try to write to.
+
 
 ```mermaid
 graph TD;
@@ -91,3 +116,25 @@ graph TD;
     SQL_Create_Table-->SQL_empty_set;
     SQL_empty_set-->IcebergConnector;
 ```
+
+### Job Settings
+
+- Select Glue with Spark
+- Select Python as language
+- 
+
+- add a job parameter with the key of `--conf` and value of:
+
+```
+spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog --conf spark.sql.catalog.my_catalog.warehouse=s3://my-output-directory --conf spark.sql.catalog.my_catalog.catalog-impl=org.apache.iceberg.aws.glue.GlueCatalog --conf spark.sql.catalog.my_catalog.io-impl=org.apache.iceberg.aws.s3.S3FileIO --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
+```
+*Make sure to replace `s3://my-output-directory` with a valid s3 address*
+
+- Additional optional configurations to use dynamo db as a lock table
+
+```
+--conf spark.sql.catalog.my_catalog.lock.table=<DynamoDB_TABLE_NAME>
+--conf spark.sql.catalog.my_catalog.lock-impl=org.apache.iceberg.aws.glue.DynamoLockManager
+```
+
+## Connect to Dremio
