@@ -138,3 +138,24 @@ spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog --conf spark.
 ```
 
 ## Connect to Dremio
+
+- Add AWS Glue as a Data Source
+
+- Run the following query
+
+```sql
+SELECT * 
+FROM nyc_worker_coops 
+WHERE Subtype = 'Coaching'
+```
+
+- setup reflections reflecting borough/subtype as dimentions and the "number of worker" fields as measures
+
+- Run the following query
+
+```
+SELECT Borough, Subtype, SUM("Number of Worker-Owners") AS Total_Worker_Owners,
+SUM("Number of Non-Member Worker-Owners") AS Total_Non_Worker_Owners 
+FROM nyc_worker_coops 
+GROUP BY Borough, Subtype
+```
